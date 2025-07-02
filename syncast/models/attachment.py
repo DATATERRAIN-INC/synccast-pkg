@@ -1,0 +1,78 @@
+# syncast/models/attachment.py
+from django.db import models
+
+from syncast.models.base import SyncCastBaseModel
+from syncast.models.message import SyncCastMessage
+ 
+class AbstractSyncCastMessageAttachment(SyncCastBaseModel):
+    """
+    Represents an attachment to a message, e.g., images, files.
+    Tied to a specific message.
+    """
+    class SyncCastAttachmentType(models.TextChoices):
+        # Images
+        JPEG = "jpeg", "JPEG Image"
+        JPG = "jpg", "JPG Image"
+        PNG = "png", "PNG Image"
+        GIF = "gif", "GIF Image"
+        WEBP = "webp", "WebP Image"
+
+        # Documents
+        PDF = "pdf", "PDF Document"
+        TXT = "txt", "Text File"
+        DOC = "doc", "Word Document"
+        DOCX = "docx", "Word Document (.docx)"
+        XLS = "xls", "Excel Spreadsheet"
+        XLSX = "xlsx", "Excel Spreadsheet (.xlsx)"
+        PPT = "ppt", "PowerPoint Presentation"
+        PPTX = "pptx", "PowerPoint (.pptx)"
+
+        # Audio
+        MP3 = "mp3", "MP3 Audio"
+        WAV = "wav", "WAV Audio"
+        OGG = "ogg", "OGG Audio"
+
+        # Video
+        MP4 = "mp4", "MP4 Video"
+        MOV = "mov", "MOV Video"
+        AVI = "avi", "AVI Video"
+        WEBM = "webm", "WebM Video"
+        MKV = "mkv", "MKV Video"
+
+        # Archives
+        ZIP = "zip", "ZIP Archive"
+        RAR = "rar", "RAR Archive"
+        TAR = "tar", "TAR Archive"
+        GZ = "gz", "GZip Archive"
+
+        # Fallback
+        OTHER = "other", "Other"
+
+    message = models.ForeignKey(
+        SyncCastMessage,
+        on_delete=models.CASCADE,
+        related_name="attachments",
+        help_text="The message this attachment belongs to."
+    )
+
+    file = models.FileField(
+        upload_to='message_attachments/',
+        help_text="The attached file."
+    )
+
+    file_type = models.CharField(
+        max_length=10,
+        choices=SyncCastAttachmentType.choices,
+        default=SyncCastAttachmentType.OTHER,
+        help_text="Type of the attachment, e.g., image, file, video."
+    )
+
+    description = models.TextField(
+        blank=True,
+        help_text="Optional description of the attachment."
+    )
+
+    class Meta:
+        abstract = True
+
+     
