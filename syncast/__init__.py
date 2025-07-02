@@ -42,6 +42,9 @@ from syncast.core.dispatcher import SyncCastDispatcher
 # RequestConfig reads values from this module for dynamic access
 from syncast.core.config import SyncCastRequestConfig
 
+from syncast.core.topic import SyncCastTopicBuilder
+from syncast.core.payload import SyncCastPayloadBuilder
+
 # ------------------------------------------------------------------------------
 # Public interface (convenient preconfigured instances)
 # ------------------------------------------------------------------------------
@@ -65,5 +68,7 @@ __all__ = [
     "api_base",
     "max_network_retries",
     "SyncCastDispatcher",
-    "SyncCastRequestConfig"
+    "SyncCastRequestConfig",
+    "SyncCastTopicBuilder",
+    "SyncCastPayloadBuilder"
 ]

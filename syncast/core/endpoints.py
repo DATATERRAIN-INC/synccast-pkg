@@ -4,13 +4,13 @@ from typing import Final
  
 class PushEndpoints:
     """Endpoints for real-time push events."""
-    MESSAGE: Final[str] = "/push/message"
+    SYSTEM: Final[str] = "/push/system"
     TYPING: Final[str] = "/push/typing"
+    MESSAGE: Final[str] = "/push/message"
     REACTION: Final[str] = "/push/reaction"
     PRESENCE: Final[str] = "/push/presence"
     BROADCAST: Final[str] = "/push/broadcast"
-    SYSTEM: Final[str] = "/push/system"
-
+    NOTIFICATION: Final[str] = "/push/notification"
 
 class DataEndpoints:
     """Endpoints for structured data delivery."""
