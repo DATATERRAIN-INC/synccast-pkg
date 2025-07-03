@@ -3,10 +3,10 @@
 from django.db import models
 from django.conf import settings
 
-from syncast.models.scope import SyncCastScope
-from syncast.models.base import SyncCastBaseModel
+from syncast.models.scope import AbstractSyncCastScope
+from syncast.models.base import AbstractSyncCastBaseModel
 
-class SyncCastRoom(SyncCastBaseModel):
+class AbstractSyncCastRoom(AbstractSyncCastBaseModel):
     """
     Represents a communication room which maps to a unique scope instance.
     Used for group chats or direct messages.
@@ -31,14 +31,14 @@ class SyncCastRoom(SyncCastBaseModel):
         help_text="Type of room: group chat or direct message."
     )
     scope = models.OneToOneField(
-        SyncCastScope,
+        AbstractSyncCastScope,
         on_delete=models.CASCADE,
-        related_name="room",
+        related_name="+",
         help_text="Each room maps to a unique Scope to handle its channels."
     )
     participants = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
-        related_name="rooms",
+        related_name="+",
         help_text="Users who are members of this room."
     )
     created_at = models.DateTimeField(auto_now_add=True)

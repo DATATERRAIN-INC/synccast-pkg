@@ -2,17 +2,17 @@
 from django.db import models
 from django.conf import settings
 
-from syncast.models.base import SyncCastBaseModel
-from syncast.models.room import SyncCastRoom
+from syncast.models.base import AbstractSyncCastBaseModel
+from syncast.models.room import AbstractSyncCastRoom
 
-class SyncCastMessage(SyncCastBaseModel):
+class AbstractSyncCastMessage(AbstractSyncCastBaseModel):
     """
     Represents a message in a chat room (group or DM).
     Tied to a Scope via a Room.
     """
 
     room = models.ForeignKey(
-        SyncCastRoom,
+        AbstractSyncCastRoom,
         on_delete=models.CASCADE,
         related_name="messages",
         help_text="The room this message was sent in."

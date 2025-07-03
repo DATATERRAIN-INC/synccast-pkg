@@ -1,5 +1,3 @@
-# syncast/core/dispatcher.py
-
 import requests
 import logging
 from urllib3.util.retry import Retry
@@ -7,13 +5,15 @@ from requests.adapters import HTTPAdapter
 from typing import Optional, Dict, Any, Union
 
 from syncast.core.config import SyncCastRequestConfig
+from syncast.exceptions.core import SyncCastDispatchError, SyncCastAPIError
 
 logger = logging.getLogger(__name__)
 
 
 class SyncCastDispatcher:
     """
-    SyncCastDispatcher is an HTTP client for SyncCast APIs with retry, logging, and credential support.
+    HTTP client for communicating with SyncCast APIs.
+    Handles secret injection, retries, and structured error reporting.
     """
 
     def __init__(
@@ -21,7 +21,7 @@ class SyncCastDispatcher:
         base_url: Optional[str] = None,
         headers: Optional[Dict[str, str]] = None,
         timeout: int = 5,
-        retries: Optional[int] = None,
+        retries: Optional[int] = 3,
         backoff_factor: float = 0.3,
         logger_instance: Optional[logging.Logger] = None
     ):
@@ -31,11 +31,10 @@ class SyncCastDispatcher:
         self.headers = headers or {}
         self.timeout = timeout
         self.logger = logger_instance or logger
-
         self.session = requests.Session()
 
         retry_strategy = Retry(
-            total=retries if retries is not None else config.max_retries,
+            total=retries,
             backoff_factor=backoff_factor,
             status_forcelist=[429, 500, 502, 503, 504],
             allowed_methods=["GET", "POST", "PUT", "DELETE"]
@@ -45,6 +44,7 @@ class SyncCastDispatcher:
         self.session.mount("http://", adapter)
         self.session.mount("https://", adapter)
 
+        # Inject credentials from config
         if config.app_id and config.app_secret:
             self.with_secret(config.app_id, config.app_secret)
 
@@ -75,86 +75,65 @@ class SyncCastDispatcher:
         return f"{self.base_url}/{endpoint.lstrip('/')}"
 
     def _log_request(self, method: str, url: str, **kwargs):
-        self.logger.debug(f"{method.upper()} Request to {url} with: {kwargs}")
+        self.logger.debug(f"[SyncCastDispatcher] {method.upper()} {url} | kwargs={kwargs}")
+
+    def _safe_request(self, method: str, *args, **kwargs) -> requests.Response:
+        try:
+            return getattr(self.session, method)(*args, timeout=self.timeout, **kwargs)
+        except requests.exceptions.RequestException as e:
+            self.logger.exception(f"[SyncCastDispatcher] {method.upper()} request failed")
+            raise SyncCastDispatchError(
+                message=f"{method.upper()} request failed",
+                extra={"exception": str(e), "url": args[0] if args else None}
+            ) from e
 
     def _handle_response(self, response: requests.Response) -> Union[Dict[str, Any], str]:
         try:
             response.raise_for_status()
-            try:
-                return response.json()
-            except ValueError:
-                return response.text
         except requests.exceptions.HTTPError as e:
-            self.logger.error(f"HTTP error: {e.response.status_code} - {e.response.text}")
-            raise
+            self.logger.error(f"[SyncCastDispatcher] HTTP {e.response.status_code} - {e.response.text}")
+            raise SyncCastAPIError(
+                message=f"API responded with status {e.response.status_code}",
+                extra={
+                    "status_code": e.response.status_code,
+                    "body": e.response.text,
+                    "url": e.response.url
+                }
+            ) from e
+
+        try:
+            return response.json()
+        except ValueError:
+            return response.text
         except Exception as e:
-            self.logger.error(f"Unexpected error: {str(e)}")
-            raise
+            self.logger.exception("[SyncCastDispatcher] Failed to parse JSON response")
+            raise SyncCastAPIError(
+                message="Invalid JSON response",
+                extra={"body": response.text, "url": response.url}
+            ) from e
 
-    def post(
-        self,
-        endpoint: str,
-        data: Optional[Dict[str, Any]] = None,
-        json: Optional[Dict[str, Any]] = None,
-        files: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, str]] = None
-    ) -> Union[Dict[str, Any], str]:
+    # Public request methods
+
+    def post(self, endpoint: str, **kwargs) -> Union[Dict[str, Any], str]:
         url = self._build_url(endpoint)
-        self._log_request("post", url, data=data, json=json, files=files)
-        response = self.session.post(
-            url,
-            data=data,
-            json=json,
-            files=files,
-            headers={**self.headers, **(headers or {})},
-            timeout=self.timeout
-        )
+        self._log_request("post", url, **kwargs)
+        response = self._safe_request("post", url, **kwargs)
         return self._handle_response(response)
 
-    def get(
-        self,
-        endpoint: str,
-        params: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, str]] = None
-    ) -> Union[Dict[str, Any], str]:
+    def get(self, endpoint: str, **kwargs) -> Union[Dict[str, Any], str]:
         url = self._build_url(endpoint)
-        self._log_request("get", url, params=params)
-        response = self.session.get(
-            url,
-            params=params,
-            headers={**self.headers, **(headers or {})},
-            timeout=self.timeout
-        )
+        self._log_request("get", url, **kwargs)
+        response = self._safe_request("get", url, **kwargs)
         return self._handle_response(response)
 
-    def put(
-        self,
-        endpoint: str,
-        data: Optional[Dict[str, Any]] = None,
-        json: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, str]] = None
-    ) -> Union[Dict[str, Any], str]:
+    def put(self, endpoint: str, **kwargs) -> Union[Dict[str, Any], str]:
         url = self._build_url(endpoint)
-        self._log_request("put", url, data=data, json=json)
-        response = self.session.put(
-            url,
-            data=data,
-            json=json,
-            headers={**self.headers, **(headers or {})},
-            timeout=self.timeout
-        )
+        self._log_request("put", url, **kwargs)
+        response = self._safe_request("put", url, **kwargs)
         return self._handle_response(response)
 
-    def delete(
-        self,
-        endpoint: str,
-        headers: Optional[Dict[str, str]] = None
-    ) -> Union[Dict[str, Any], str]:
+    def delete(self, endpoint: str, **kwargs) -> Union[Dict[str, Any], str]:
         url = self._build_url(endpoint)
-        self._log_request("delete", url)
-        response = self.session.delete(
-            url,
-            headers={**self.headers, **(headers or {})},
-            timeout=self.timeout
-        )
+        self._log_request("delete", url, **kwargs)
+        response = self._safe_request("delete", url, **kwargs)
         return self._handle_response(response)

@@ -7,6 +7,13 @@ from syncast.core.enums import SyncCastEventType
 from syncast.core.endpoints import DataEndpoints
 from syncast.models import SyncCastScope
 
+from syncast.exceptions.core import (
+    SyncCastTopicError,
+    SyncCastPayloadError,
+    SyncCastDispatchError,
+    SyncCastAPIError
+)
+
 
 class StreamService:
     """
@@ -35,41 +42,54 @@ class StreamService:
     ) -> dict:
         """
         Send a real-time UI data sync event.
-
-        Args:
-            user_id (str): User ID to whom the update is sent.
-            data (dict): Payload data.
-            event_type (SyncCastEventType): Event type (defaults to UI_DATA_SYNC).
-            scope (str|SyncCastScope): MQTT scope (can be string or model).
-            channel (str): Channel (default "sync").
-            topic (str): Optional override for topic.
-            target_id (str): Optional additional identifier (like screen or component).
-            sender_name (str): Optional sender name.
-            sender_role (str): Optional sender role.
-            platform/device/location (Optional[str]): Optional metadata.
-
-        Returns:
-            dict: Response from dispatcher.
         """
-        if not topic:
-            builder = SyncCastTopicBuilder(app_id=self.app_id, scope=scope).channel(channel)
-            if target_id:
-                builder.extra(target_id)
-            topic = builder.for_user(user_id).build()
 
-        payload_builder = (
-            SyncCastPayloadBuilder(user=user_id, type=event_type)
-            .set_scope(scope)
-            .set_topic(topic)
-            .set_data(data)
-        )
+        try:
+            # Build topic if not provided
+            if not topic:
+                builder = SyncCastTopicBuilder(app_id=self.app_id, scope=scope).channel(channel)
+                if target_id:
+                    builder.extra(target_id)
+                topic = builder.for_user(user_id).build()
 
-        if sender_name:
-            payload_builder.set_sender_info(sender_id=user_id, sender_name=sender_name, sender_role=sender_role)
-
-        if platform or device or location:
-            payload_builder.set_metadata(
-                platform or "unknown", device or "unknown", location or "unknown"
+            # Build payload
+            payload_builder = (
+                SyncCastPayloadBuilder(user=user_id, type=event_type)
+                .set_scope(scope)
+                .set_topic(topic)
+                .set_data(data)
             )
 
-        return self.dispatcher.post(DataEndpoints.SYNC, json=payload_builder.build())
+            if sender_name:
+                payload_builder.set_sender_info(sender_id=user_id, sender_name=sender_name, sender_role=sender_role)
+
+            if platform or device or location:
+                payload_builder.set_metadata(
+                    platform or "unknown", device or "unknown", location or "unknown"
+                )
+
+            payload = payload_builder.build()
+
+            # Send to SyncCast
+            return self.dispatcher.post(DataEndpoints.SYNC, json=payload)
+
+        except (ValueError, SyncCastTopicError) as e:
+            raise SyncCastTopicError(
+                message="Invalid topic during UI sync",
+                extra={"scope": str(scope), "channel": channel, "target_id": target_id}
+            ) from e
+
+        except SyncCastPayloadError as e:
+            raise SyncCastPayloadError(
+                message="Invalid UI sync payload",
+                extra={"user_id": user_id, "topic": topic}
+            ) from e
+
+        except SyncCastDispatchError as e:
+            raise  # Already wrapped with dispatch metadata
+
+        except Exception as e:
+            raise SyncCastAPIError(
+                message="Unexpected error while sending UI update",
+                extra={"user_id": user_id, "topic": topic, "error": str(e)}
+            ) from e

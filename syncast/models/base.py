@@ -3,7 +3,7 @@
 from django.db import models
 from django.conf import settings
 
-class SyncCastBaseModel(models.Model):
+class AbstractSyncCastBaseModel(models.Model):
 
     is_active = models.BooleanField(
         default=True,

@@ -1,43 +1,67 @@
-# syncast/core/topic.py
-
 from typing import Optional, Dict, Any, Union
 from copy import deepcopy
 from django.apps import apps
-from syncast.models.scope import SyncCastScope
+
+from syncast.exceptions.core import SyncCastTopicError
+    
+
 
 class SyncCastTopicBuilder:
     """
     Builds MQTT topic strings dynamically based on app_id, scope (instance or slug), 
     channel, and optional user or extra parts. Supports wildcards for subscription.
     """
+
     def __init__(
         self,
-        app_id: str,
-        scope: Union[str, SyncCastScope],
+        scope: Union[str, object],  # Accepts either a slug or model instance
     ):
-        self.app_id = app_id
-        self.scope: SyncCastScope = self._resolve_scope(scope)
+        from syncast import config # loads app_id from runtime settings
+        self.app_id: str = config.app_id or "default-app"  # fallback for dev
+        self.scope = self._resolve_scope(scope)
         self._channel: Optional[str] = None
         self._extra_parts: list[str] = []
         self._user_id: Optional[Union[int, str]] = None
         self._wildcard: bool = False
 
-    def _resolve_scope(self, scope: Union[str, SyncCastScope]) -> SyncCastScope:
-        if isinstance(scope, SyncCastScope):
+    @staticmethod
+    def _get_concrete_scope_model():
+        """
+        Dynamically find the concrete model subclassing AbstractSyncCastScope.
+        """
+        from syncast.models.scope import AbstractSyncCastScope
+
+        for model in apps.get_models():
+            if issubclass(model, AbstractSyncCastScope) and not model._meta.abstract:
+                return model
+
+        raise LookupError("No concrete model found inheriting from AbstractSyncCastScope.")
+
+    def _resolve_scope(self, scope: Union[str, object]):
+        if hasattr(scope, "slug") and hasattr(scope, "channels"):
             return scope
+
         if isinstance(scope, str):
             try:
-                return SyncCastScope.objects.prefetch_related("channels").get(slug=scope)
-            except SyncCastScope.DoesNotExist:
-                raise ValueError(f"Scope with slug '{scope}' does not exist.")
-        raise TypeError("Scope must be a SyncCastScope instance or a slug string.")
+                ScopeModel = self._get_concrete_scope_model()
+                return ScopeModel.objects.prefetch_related("channels").get(slug=scope)
+            except Exception as e:
+                raise SyncCastTopicError(
+                    message=f"Scope with slug '{scope}' not found or failed to load.",
+                    extra={"slug": scope, "error": str(e)}
+                ) from e
+
+        raise SyncCastTopicError(
+            message="Invalid scope type. Must be a slug or model instance.",
+            extra={"provided_type": type(scope).__name__}
+        )
 
     def channel(self, channel_name: str) -> 'SyncCastTopicBuilder':
         if not any(c.name == channel_name for c in self.scope.channels.all()):
             valid_channels = [c.name for c in self.scope.channels.all()]
-            raise ValueError(
-                f"Channel '{channel_name}' not defined for scope '{self.scope.name}'. "
-                f"Available: {valid_channels}"
+            raise SyncCastTopicError(
+                message=f"Channel '{channel_name}' not defined for scope '{self.scope.name}'.",
+                extra={"channel": channel_name, "valid_channels": valid_channels}
             )
         self._channel = channel_name
         return self
@@ -70,10 +94,16 @@ class SyncCastTopicBuilder:
 
     def build(self) -> str:
         if not self._channel:
-            raise ValueError("Channel must be set before building topic")
+            raise SyncCastTopicError(
+                message="Channel must be set before building topic",
+                extra={"scope": self.scope.name, "app_id": self.app_id}
+            )
+
         parts = [self.app_id, self.scope.name, self._channel] + self._extra_parts
+
         if self._user_id is not None:
             parts += ["user", "+" if self._wildcard else str(self._user_id)]
+
         return "/".join(parts)
 
     def build_dict(self) -> dict:

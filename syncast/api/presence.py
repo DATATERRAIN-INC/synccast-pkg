@@ -1,10 +1,18 @@
 from typing import Optional, Dict, Any, Union
+
 from syncast.core.dispatcher import SyncCastDispatcher
 from syncast.core.topic import SyncCastTopicBuilder
 from syncast.core.payload import SyncCastPayloadBuilder
 from syncast.core.enums import SyncCastEventType
 from syncast.core.endpoints import PushEndpoints
 from syncast.models import SyncCastScope
+
+from syncast.exceptions.core import (
+    SyncCastTopicError,
+    SyncCastPayloadError,
+    SyncCastDispatchError,
+    SyncCastAPIError
+)
 
 
 class PresenceService:
@@ -33,40 +41,54 @@ class PresenceService:
     ) -> dict:
         """
         Send presence event to the SyncCast system.
-
-        Args:
-            user_id (str): The ID of the user whose presence is being updated.
-            data (dict): Arbitrary data payload (e.g., {"status": "online"}).
-            scope (Union[str, SyncCastScope]): Scope instance or slug.
-            channel (str): Channel under the scope.
-            room_id (Optional[str]): Optional room identifier.
-            topic (Optional[str]): Override for topic.
-            sender_name (Optional[str]): Display name.
-            sender_role (Optional[str]): Role name.
-            platform/device/location (Optional[str]): Optional metadata.
-
-        Returns:
-            dict: API response from dispatcher.
         """
-        if not topic:
-            builder = SyncCastTopicBuilder(app_id=self.app_id, scope=scope).channel(channel)
-            if room_id:
-                builder.extra(room_id)
-            topic = builder.for_user(user_id).build()
 
-        payload_builder = (
-            SyncCastPayloadBuilder(user=user_id, type=SyncCastEventType.USER_PRESENCE)
-            .set_scope(scope)
-            .set_topic(topic)
-            .set_data(data)
-        )
+        try:
+            # Generate topic
+            if not topic:
+                builder = SyncCastTopicBuilder(app_id=self.app_id, scope=scope).channel(channel)
+                if room_id:
+                    builder.extra(room_id)
+                topic = builder.for_user(user_id).build()
 
-        if sender_name:
-            payload_builder.set_sender_info(sender_id=user_id, sender_name=sender_name, sender_role=sender_role)
-
-        if platform or device or location:
-            payload_builder.set_metadata(
-                platform or "unknown", device or "unknown", location or "unknown"
+            # Build payload
+            payload_builder = (
+                SyncCastPayloadBuilder(user=user_id, type=SyncCastEventType.USER_PRESENCE)
+                .set_scope(scope)
+                .set_topic(topic)
+                .set_data(data)
             )
 
-        return self.dispatcher.post(PushEndpoints.PRESENCE, json=payload_builder.build())
+            if sender_name:
+                payload_builder.set_sender_info(sender_id=user_id, sender_name=sender_name, sender_role=sender_role)
+
+            if platform or device or location:
+                payload_builder.set_metadata(
+                    platform or "unknown", device or "unknown", location or "unknown"
+                )
+
+            payload = payload_builder.build()
+
+            # Dispatch to broker
+            return self.dispatcher.post(PushEndpoints.PRESENCE, json=payload)
+
+        except (ValueError, SyncCastTopicError) as e:
+            raise SyncCastTopicError(
+                message="Failed to build presence topic",
+                extra={"scope": str(scope), "channel": channel, "room_id": room_id}
+            ) from e
+
+        except SyncCastPayloadError as e:
+            raise SyncCastPayloadError(
+                message="Invalid presence payload",
+                extra={"user_id": user_id, "topic": topic}
+            ) from e
+
+        except SyncCastDispatchError:
+            raise  # Already carries context from dispatcher
+
+        except Exception as e:
+            raise SyncCastAPIError(
+                message="Unexpected error while sending presence update",
+                extra={"user_id": user_id, "topic": topic, "error": str(e)}
+            ) from e

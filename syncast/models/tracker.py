@@ -3,15 +3,15 @@
 from django.db import models
 from django.conf import settings
 
-from syncast.models.base import SyncCastBaseModel
-from syncast.models.message import SyncCastMessage
+from syncast.models.base import AbstractSyncCastBaseModel
+from syncast.models.message import AbstractSyncCastMessage
 
-class SyncCastMessageTracker(SyncCastBaseModel):
+class AbstractSyncCastReadTracker(AbstractSyncCastBaseModel):
     """
     Tracks delivery and read status for each user per message.
     """
     message = models.ForeignKey(
-        SyncCastMessage,
+        AbstractSyncCastMessage,
         on_delete=models.CASCADE,
         related_name="status_receipts",
         help_text="The message this status refers to."

@@ -2,73 +2,26 @@
 syncast
 -------
 
-Python client for interacting with the SyncCast real-time messaging and notification system.
+Python SDK for interacting with the SyncCast real-time messaging system.
 
-This module provides:
-- Global configuration variables
-- A default dispatcher for HTTP/MQTT requests
-- Topic and payload builders for structured publishing
-- A config interface to access runtime settings
+Provides:
+- SDK-style access via `from syncast.sdk import syncast`
+- Versioning and configuration placeholders
 """
 
 from typing import Optional
 
-# Import version string from internal version module
+# Version
 from syncast._version import VERSION as __version__
 
-# ------------------------------------------------------------------------------
-# Default constants for base configuration
-# ------------------------------------------------------------------------------
-
-DEFAULT_API_BASE: str = "https://api.syncast.com/v1"
-
-# Core credentials (can be set by the user)
+# Global configuration placeholders (can be set dynamically or via the SDK)
 app_id: Optional[str] = None
 app_secret: Optional[str] = None
-
-# Retry configuration
-max_network_retries: int = 3
-
-# API base URL (can be overridden)
-api_base: str = DEFAULT_API_BASE
-
-# ------------------------------------------------------------------------------
-# Core interfaces exposed to users
-# ------------------------------------------------------------------------------
-
-# Dispatcher handles HTTP requests with retries, secrets, and auth
-from syncast.core.dispatcher import SyncCastDispatcher
-
-# RequestConfig reads values from this module for dynamic access
-from syncast.core.config import SyncCastRequestConfig
-
-from syncast.core.topic import SyncCastTopicBuilder
-from syncast.core.payload import SyncCastPayloadBuilder
-
-# ------------------------------------------------------------------------------
-# Public interface (convenient preconfigured instances)
-# ------------------------------------------------------------------------------
-
-# Shared dispatcher using global api_base and credentials
-dispatcher = SyncCastDispatcher().with_base_url(api_base)
-
-# Config reader that dynamically reflects runtime values
-config = SyncCastRequestConfig()
-
-# ------------------------------------------------------------------------------
-# Public exports for package consumers
-# ------------------------------------------------------------------------------
+api_base: str = "https://api.syncast.com/v1"
 
 __all__ = [
     "__version__",
-    "dispatcher",
-    "config",
     "app_id",
     "app_secret",
     "api_base",
-    "max_network_retries",
-    "SyncCastDispatcher",
-    "SyncCastRequestConfig",
-    "SyncCastTopicBuilder",
-    "SyncCastPayloadBuilder"
 ]

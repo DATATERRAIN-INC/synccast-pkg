@@ -3,17 +3,17 @@
 from django.db import models
 from django.conf import settings
 
-from syncast.models.base import SyncCastBaseModel
-from syncast.models.message import SyncCastMessage
+from syncast.models.base import AbstractSyncCastBaseModel
+from syncast.models.message import AbstractSyncCastMessage
 
-class SynCastMessageReaction(SyncCastBaseModel):
+class AbstractSyncCastReaction(AbstractSyncCastBaseModel):
     """
     Represents a reaction to a message, e.g., emojis.
     Tied to a specific message.
     """
 
     message = models.ForeignKey(
-        SyncCastMessage,
+        AbstractSyncCastMessage,
         on_delete=models.CASCADE,
         related_name="reactions",
         help_text="The message this reaction belongs to."

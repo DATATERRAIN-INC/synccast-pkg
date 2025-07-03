@@ -1,12 +1,12 @@
 from .base import SyncCastError
 from .codes import SyncCastErrorCode
-from .types import (
+from .core import (
     SyncCastAPIError,
     SyncCastTopicError,
     SyncCastPayloadError,
     SyncCastDispatchError,
     SyncCastValidationError,
-    SyncCastPresenceError,
+    SyncCastPresenceError
 )
 
 __all__ = [
@@ -17,5 +17,5 @@ __all__ = [
     "SyncCastPayloadError",
     "SyncCastDispatchError",
     "SyncCastValidationError",
-    "SyncCastPresenceError",
+    "SyncCastPresenceError"
 ]

@@ -1,10 +1,10 @@
 # syncast/models/attachment.py
 from django.db import models
 
-from syncast.models.base import SyncCastBaseModel
-from syncast.models.message import SyncCastMessage
+from syncast.models.base import AbstractSyncCastBaseModel
+from syncast.models.message import AbstractSyncCastMessage
  
-class AbstractSyncCastMessageAttachment(SyncCastBaseModel):
+class AbstractSyncCastAttachment(AbstractSyncCastBaseModel):
     """
     Represents an attachment to a message, e.g., images, files.
     Tied to a specific message.
@@ -49,7 +49,7 @@ class AbstractSyncCastMessageAttachment(SyncCastBaseModel):
         OTHER = "other", "Other"
 
     message = models.ForeignKey(
-        SyncCastMessage,
+        AbstractSyncCastMessage,
         on_delete=models.CASCADE,
         related_name="attachments",
         help_text="The message this attachment belongs to."

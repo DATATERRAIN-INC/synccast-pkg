@@ -1,9 +1,9 @@
 # syncast/models/scope.py
 
 from django.db import models
-from syncast.models.base import SyncCastBaseModel
+from syncast.models.base import AbstractSyncCastBaseModel
 
-class SyncCastScope(SyncCastBaseModel):
+class AbstractSyncCastScope(AbstractSyncCastBaseModel):
     """
     Represents a logical domain of communication, e.g., 'chat', 'program', 'calendar'.
     This is a shared context for multiple channels.
@@ -17,9 +17,7 @@ class SyncCastScope(SyncCastBaseModel):
         blank=True, 
         help_text="Optional description of what this scope represents."
     )
-
     class Meta:
-        ordering = ["name"]
         abstract = True
  
 

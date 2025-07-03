@@ -1,10 +1,19 @@
 from typing import Optional, Dict, Any, Union
+
 from syncast.core.dispatcher import SyncCastDispatcher
 from syncast.core.topic import SyncCastTopicBuilder
 from syncast.core.payload import SyncCastPayloadBuilder
 from syncast.core.enums import SyncCastEventType
 from syncast.core.endpoints import PushEndpoints
-from syncast.models import SyncCastScope  # import the model
+from syncast.models import SyncCastScope
+
+from syncast.exceptions.core import (
+    SyncCastTopicError,
+    SyncCastPayloadError,
+    SyncCastDispatchError,
+    SyncCastAPIError,
+)
+
 
 class NotificationService:
     """
@@ -13,12 +22,12 @@ class NotificationService:
 
     def __init__(self, dispatcher: SyncCastDispatcher, app_id: str):
         self.dispatcher = dispatcher
-        self.app_id = app_id  # required for topic builder
+        self.app_id = app_id
 
     def send_notification(
         self,
         *,
-        user_id: str,
+        user_id: Optional[str],
         data: Dict[str, Any],
         scope: Union[str, SyncCastScope] = "system",
         channel: str = "notification",
@@ -32,40 +41,55 @@ class NotificationService:
     ) -> dict:
         """
         Send a system-level notification to the SyncCast system.
-
-        Args:
-            user_id (str): The ID of the user receiving the notification.
-            data (dict): Arbitrary data payload.
-            scope (Union[str, SyncCastScope]): Scope instance or slug.
-            channel (str): Channel name.
-            topic (Optional[str]): Custom topic.
-            room_id (Optional[str]): Optional room context.
-            sender_name/sender_role/platform/device/location: Metadata.
-
-        Returns:
-            dict: API response from dispatcher.
         """
-        # Build topic dynamically only if not explicitly passed
-        if not topic:
-            topic_builder = SyncCastTopicBuilder(app_id=self.app_id, scope=scope).channel(channel)
-            if room_id:
-                topic_builder.extra(room_id)
-            topic = topic_builder.for_user(user_id).build()
 
-        # Build payload
-        payload_builder = (
-            SyncCastPayloadBuilder(user=user_id, type=SyncCastEventType.SYSTEM_NOTIFICATION)
-            .set_scope(scope)
-            .set_topic(topic)
-            .set_data(data)
-        )
+        try:
+            if not topic:
+                builder = SyncCastTopicBuilder(app_id=self.app_id, scope=scope).channel(channel)
+                if room_id:
+                    builder.extra(room_id)
+                if user_id:
+                    builder.for_user(user_id)
+                topic = builder.build()
 
-        if sender_name:
-            payload_builder.set_sender_info(sender_id=user_id, sender_name=sender_name, sender_role=sender_role)
-
-        if platform or device or location:
-            payload_builder.set_metadata(
-                platform or "unknown", device or "unknown", location or "unknown"
+            payload_builder = (
+                SyncCastPayloadBuilder(user=user_id, type=SyncCastEventType.SYSTEM_NOTIFICATION)
+                .set_scope(scope)
+                .set_topic(topic)
+                .set_data(data)
             )
 
-        return self.dispatcher.post(PushEndpoints.SYSTEM, json=payload_builder.build())
+            if sender_name and user_id:
+                payload_builder.set_sender_info(
+                    sender_id=user_id, sender_name=sender_name, sender_role=sender_role
+                )
+
+            if platform or device or location:
+                payload_builder.set_metadata(
+                    platform or "unknown", device or "unknown", location or "unknown"
+                )
+
+            payload = payload_builder.build()
+
+            return self.dispatcher.post(PushEndpoints.SYSTEM, json=payload)
+
+        except (ValueError, SyncCastTopicError) as e:
+            raise SyncCastTopicError(
+                message="Invalid topic for system notification",
+                extra={"scope": str(scope), "channel": channel, "room_id": room_id}
+            ) from e
+
+        except SyncCastPayloadError as e:
+            raise SyncCastPayloadError(
+                message="Invalid system notification payload",
+                extra={"user_id": user_id, "topic": topic}
+            ) from e
+
+        except SyncCastDispatchError:
+            raise  # Already wrapped in dispatcher
+
+        except Exception as e:
+            raise SyncCastAPIError(
+                message="Unexpected error while sending system notification",
+                extra={"user_id": user_id, "topic": topic, "error": str(e)}
+            ) from e

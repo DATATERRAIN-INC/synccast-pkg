@@ -7,6 +7,13 @@ from syncast.core.enums import SyncCastEventType
 from syncast.core.endpoints import PushEndpoints
 from syncast.models import SyncCastScope
 
+from syncast.exceptions.core import (
+    SyncCastTopicError,
+    SyncCastPayloadError,
+    SyncCastDispatchError,
+    SyncCastAPIError,
+)
+
 
 class MessageService:
     """
@@ -34,42 +41,53 @@ class MessageService:
     ) -> dict:
         """
         Send a chat message via MQTT through SyncCast.
-
-        Args:
-            user_id (str): The sender's user ID.
-            data (dict): Message payload (e.g., {"text": "Hello"}).
-            scope (Union[str, SyncCastScope]): The message scope.
-            channel (str): Channel name (default: "message").
-            topic (Optional[str]): Custom topic override.
-            room_id (Optional[str]): Optional room context.
-            sender_name (Optional[str]): Display name.
-            sender_role (Optional[str]): Sender role.
-            platform/device/location: Metadata for context.
-
-        Returns:
-            dict: Dispatcher response.
         """
-        # Dynamically build topic if not passed
-        if not topic:
-            builder = SyncCastTopicBuilder(app_id=self.app_id, scope=scope).channel(channel)
-            if room_id:
-                builder.extra(room_id)
-            topic = builder.for_user(user_id).build()
 
-        # Build payload
-        payload_builder = (
-            SyncCastPayloadBuilder(user=user_id, type=SyncCastEventType.CHAT_MESSAGE)
-            .set_scope(scope)
-            .set_topic(topic)
-            .set_data(data)
-        )
+        try:
+            if not topic:
+                builder = SyncCastTopicBuilder(app_id=self.app_id, scope=scope).channel(channel)
+                if room_id:
+                    builder.extra(room_id)
+                topic = builder.for_user(user_id).build()
 
-        if sender_name:
-            payload_builder.set_sender_info(sender_id=user_id, sender_name=sender_name, sender_role=sender_role)
-
-        if platform or device or location:
-            payload_builder.set_metadata(
-                platform or "unknown", device or "unknown", location or "unknown"
+            payload_builder = (
+                SyncCastPayloadBuilder(user=user_id, type=SyncCastEventType.CHAT_MESSAGE)
+                .set_scope(scope)
+                .set_topic(topic)
+                .set_data(data)
             )
 
-        return self.dispatcher.post(PushEndpoints.MESSAGE, json=payload_builder.build())
+            if sender_name:
+                payload_builder.set_sender_info(
+                    sender_id=user_id, sender_name=sender_name, sender_role=sender_role
+                )
+
+            if platform or device or location:
+                payload_builder.set_metadata(
+                    platform or "unknown", device or "unknown", location or "unknown"
+                )
+
+            payload = payload_builder.build()
+
+            return self.dispatcher.post(PushEndpoints.MESSAGE, json=payload)
+
+        except (ValueError, SyncCastTopicError) as e:
+            raise SyncCastTopicError(
+                message="Failed to build chat message topic",
+                extra={"scope": str(scope), "channel": channel, "room_id": room_id}
+            ) from e
+
+        except SyncCastPayloadError as e:
+            raise SyncCastPayloadError(
+                message="Invalid chat message payload",
+                extra={"user_id": user_id, "topic": topic}
+            ) from e
+
+        except SyncCastDispatchError:
+            raise  # already includes context from dispatcher
+
+        except Exception as e:
+            raise SyncCastAPIError(
+                message="Unexpected error while sending chat message",
+                extra={"user_id": user_id, "topic": topic, "error": str(e)}
+            ) from e

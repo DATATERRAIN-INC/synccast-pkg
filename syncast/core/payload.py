@@ -1,25 +1,26 @@
 # Package imports
-from typing import Optional, Dict, Any, Union, Self
+from typing import Optional, Dict, Any, Union
 from copy import deepcopy
 
 # Module imports
 from syncast.models import SyncCastScope
 from syncast.core.enums import SyncCastEventType, SyncCastPriorityLevel, SyncCastQosLevel
+from syncast.exceptions.core import SyncCastPayloadError
 
 class SyncCastPayloadBuilder:
     """
     Builds structured notification payloads for SyncCast events.
     Allows setting sender info, core data, metadata, and actions.
     """
-    def __init__(
-            self, 
-            user: int, 
-            type: SyncCastEventType = SyncCastEventType.PUSH_ALERT, 
-            priority: SyncCastPriorityLevel = SyncCastPriorityLevel.MEDIUM,
-            qos: SyncCastQosLevel = SyncCastQosLevel.DELIVER_AT_LEAST_ONCE
-        ) -> None:
 
-        self.user: str = user
+    def __init__(
+        self,
+        user: Optional[Union[int, str]] = None,
+        type: SyncCastEventType = SyncCastEventType.PUSH_ALERT,
+        priority: SyncCastPriorityLevel = SyncCastPriorityLevel.MEDIUM,
+        qos: SyncCastQosLevel = SyncCastQosLevel.DELIVER_AT_LEAST_ONCE
+    ) -> None:
+        self.user: Optional[str] = str(user) if user is not None else None
         self.type: SyncCastEventType = type
         self.priority: SyncCastPriorityLevel = priority
         self.qos: SyncCastQosLevel = qos
@@ -30,35 +31,40 @@ class SyncCastPayloadBuilder:
         self.metadata: Dict[str, Any] = {}
         self.action: Dict[str, str] = {}
 
-    def set_sender_info(self, sender_id: str, sender_name: str, sender_role: Optional[str] = None) -> 'SyncCastPayloadBuilder':
+    def set_sender_info(self, sender_id: str, sender_name: str, sender_role: Optional[str] = None) -> Self:
         self.sender_info = {
             "id": sender_id,
             "name": sender_name,
-            "role": sender_role or "user"
+            "role": sender_role or "system"
         }
         return self
 
-    def set_data(self, data: Optional[Dict[str, Any]] = None) -> 'SyncCastPayloadBuilder':
+    def set_data(self, data: Optional[Dict[str, Any]] = None) -> Self:
         self.data = data or {}
         return self
-    
-    def set_topic(self, topic: str) -> 'SyncCastPayloadBuilder':
+
+    def set_topic(self, topic: str) -> Self:
+        if not topic or not isinstance(topic, str):
+            raise SyncCastPayloadError(
+                message="Invalid topic format",
+                extra={"provided": topic}
+            )
         self.topic = topic
         return self
-    
-    def set_scope(self, scope: Union[SyncCastScope, str]) -> 'SyncCastPayloadBuilder':
-        """
-        Sets the scope from a model instance or a raw string slug.
-        """
+
+    def set_scope(self, scope: Union[SyncCastScope, str]) -> Self:
         if isinstance(scope, SyncCastScope):
-            self.scope = scope.slug  # or `.name` if that's your field
+            self.scope = scope.slug
         elif isinstance(scope, str):
             self.scope = scope
         else:
-            raise ValueError("Invalid scope. Must be a SyncCastScope instance or a slug string.")
+            raise SyncCastPayloadError(
+                message="Scope must be a string or SyncCastScope instance",
+                extra={"provided_type": type(scope).__name__}
+            )
         return self
-    
-    def set_metadata(self, platform: str, device: str, location: str) -> 'SyncCastPayloadBuilder':
+
+    def set_metadata(self, platform: str, device: str, location: str) -> Self:
         self.metadata = {
             "platform": platform,
             "device": device,
@@ -66,7 +72,7 @@ class SyncCastPayloadBuilder:
         }
         return self
 
-    def set_action(self, action_type: str, url: str) -> 'SyncCastPayloadBuilder':
+    def set_action(self, action_type: str, url: str) -> Self:
         self.action = {
             "type": action_type,
             "url": url
@@ -74,7 +80,13 @@ class SyncCastPayloadBuilder:
         return self
 
     def build(self) -> Dict[str, Any]:
-        payload = {
+        if not self.topic:
+            raise SyncCastPayloadError(
+                message="Payload missing required 'topic'",
+                extra={"scope": self.scope, "user": self.user}
+            )
+
+        return {
             "user_id": self.user,
             "type": self.type.value,
             "priority": self.priority.value,
@@ -86,5 +98,6 @@ class SyncCastPayloadBuilder:
             "metadata": self.metadata,
             "action": self.action
         }
-         
-        return payload
+
+    def __str__(self):
+        return str(self.build())
