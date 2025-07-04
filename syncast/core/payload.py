@@ -3,7 +3,7 @@ from typing import Optional, Dict, Any, Union
 from copy import deepcopy
 
 # Module imports
-from syncast.models import SyncCastScope
+from syncast.models import AbstractSyncCastScope
 from syncast.core.enums import SyncCastEventType, SyncCastPriorityLevel, SyncCastQosLevel
 from syncast.exceptions.core import SyncCastPayloadError
 
@@ -31,7 +31,7 @@ class SyncCastPayloadBuilder:
         self.metadata: Dict[str, Any] = {}
         self.action: Dict[str, str] = {}
 
-    def set_sender_info(self, sender_id: str, sender_name: str, sender_role: Optional[str] = None) -> Self:
+    def set_sender_info(self, sender_id: str, sender_name: str, sender_role: Optional[str] = None) -> 'SyncCastPayloadBuilder':
         self.sender_info = {
             "id": sender_id,
             "name": sender_name,
@@ -39,11 +39,11 @@ class SyncCastPayloadBuilder:
         }
         return self
 
-    def set_data(self, data: Optional[Dict[str, Any]] = None) -> Self:
+    def set_data(self, data: Optional[Dict[str, Any]] = None) -> 'SyncCastPayloadBuilder':
         self.data = data or {}
         return self
 
-    def set_topic(self, topic: str) -> Self:
+    def set_topic(self, topic: str) -> 'SyncCastPayloadBuilder':
         if not topic or not isinstance(topic, str):
             raise SyncCastPayloadError(
                 message="Invalid topic format",
@@ -52,9 +52,9 @@ class SyncCastPayloadBuilder:
         self.topic = topic
         return self
 
-    def set_scope(self, scope: Union[SyncCastScope, str]) -> Self:
-        if isinstance(scope, SyncCastScope):
-            self.scope = scope.slug
+    def set_scope(self, scope: Union[AbstractSyncCastScope, str]) -> 'SyncCastPayloadBuilder':
+        if isinstance(scope, AbstractSyncCastScope):
+            self.scope = scope.name
         elif isinstance(scope, str):
             self.scope = scope
         else:
@@ -64,7 +64,7 @@ class SyncCastPayloadBuilder:
             )
         return self
 
-    def set_metadata(self, platform: str, device: str, location: str) -> Self:
+    def set_metadata(self, platform: str, device: str, location: str) -> 'SyncCastPayloadBuilder':
         self.metadata = {
             "platform": platform,
             "device": device,
@@ -72,7 +72,7 @@ class SyncCastPayloadBuilder:
         }
         return self
 
-    def set_action(self, action_type: str, url: str) -> Self:
+    def set_action(self, action_type: str, url: str) -> 'SyncCastPayloadBuilder':
         self.action = {
             "type": action_type,
             "url": url

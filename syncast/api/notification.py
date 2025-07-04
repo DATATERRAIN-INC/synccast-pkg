@@ -5,7 +5,7 @@ from syncast.core.topic import SyncCastTopicBuilder
 from syncast.core.payload import SyncCastPayloadBuilder
 from syncast.core.enums import SyncCastEventType
 from syncast.core.endpoints import PushEndpoints
-from syncast.models import SyncCastScope
+from syncast.models import AbstractSyncCastScope
 
 from syncast.exceptions.core import (
     SyncCastTopicError,
@@ -29,7 +29,7 @@ class NotificationService:
         *,
         user_id: Optional[str],
         data: Dict[str, Any],
-        scope: Union[str, SyncCastScope] = "system",
+        scope: Union[str, AbstractSyncCastScope] = "system",
         channel: str = "notification",
         topic: Optional[str] = None,
         room_id: Optional[str] = None,
@@ -53,7 +53,7 @@ class NotificationService:
                 topic = builder.build()
 
             payload_builder = (
-                SyncCastPayloadBuilder(user=user_id, type=SyncCastEventType.SYSTEM_NOTIFICATION)
+                SyncCastPayloadBuilder(user=user_id, type=SyncCastEventType.SYSTEM_EVENT)
                 .set_scope(scope)
                 .set_topic(topic)
                 .set_data(data)

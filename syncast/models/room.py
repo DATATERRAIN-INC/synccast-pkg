@@ -38,7 +38,7 @@ class AbstractSyncCastRoom(AbstractSyncCastBaseModel):
     )
     participants = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
-        related_name="+",
+        related_name="rooms",
         help_text="Users who are members of this room."
     )
     created_at = models.DateTimeField(auto_now_add=True)

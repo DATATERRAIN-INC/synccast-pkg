@@ -5,7 +5,7 @@ from syncast.core.topic import SyncCastTopicBuilder
 from syncast.core.payload import SyncCastPayloadBuilder
 from syncast.core.enums import SyncCastEventType
 from syncast.core.endpoints import PushEndpoints
-from syncast.models import SyncCastScope
+from syncast.models import AbstractSyncCastScope
 
 
 from typing import Optional, Dict, Any, Union
@@ -14,7 +14,7 @@ from syncast.core.topic import SyncCastTopicBuilder
 from syncast.core.payload import SyncCastPayloadBuilder
 from syncast.core.enums import SyncCastEventType
 from syncast.core.endpoints import PushEndpoints
-from syncast.models import SyncCastScope
+from syncast.models import AbstractSyncCastScope
 
 from syncast.exceptions.core import (
     SyncCastTopicError,
@@ -38,7 +38,7 @@ class TypingService:
         *,
         user_id: str,
         data: Dict[str, Any],
-        scope: Union[str, SyncCastScope] = "chat",
+        scope: Union[str, AbstractSyncCastScope] = "chat",
         channel: str = "typing",
         topic: Optional[str] = None,
         room_id: Optional[str] = None,

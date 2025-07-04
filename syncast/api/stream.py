@@ -4,8 +4,8 @@ from syncast.core.dispatcher import SyncCastDispatcher
 from syncast.core.topic import SyncCastTopicBuilder
 from syncast.core.payload import SyncCastPayloadBuilder
 from syncast.core.enums import SyncCastEventType
-from syncast.core.endpoints import DataEndpoints
-from syncast.models import SyncCastScope
+from syncast.core.endpoints import PushEndpoints
+from syncast.models import AbstractSyncCastScope
 
 from syncast.exceptions.core import (
     SyncCastTopicError,
@@ -29,8 +29,8 @@ class StreamService:
         *,
         user_id: str,
         data: Dict[str, Any],
-        event_type: SyncCastEventType = SyncCastEventType.UI_DATA_SYNC,
-        scope: Union[str, SyncCastScope] = "ui",
+        event_type: SyncCastEventType = SyncCastEventType.DATA_SYNC,
+        scope: Union[str, AbstractSyncCastScope] = "ui",
         channel: str = "sync",
         topic: Optional[str] = None,
         target_id: Optional[str] = None,
@@ -71,7 +71,7 @@ class StreamService:
             payload = payload_builder.build()
 
             # Send to SyncCast
-            return self.dispatcher.post(DataEndpoints.SYNC, json=payload)
+            return self.dispatcher.post(PushEndpoints.SYNC, json=payload)
 
         except (ValueError, SyncCastTopicError) as e:
             raise SyncCastTopicError(

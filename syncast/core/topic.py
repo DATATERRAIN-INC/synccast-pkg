@@ -16,7 +16,7 @@ class SyncCastTopicBuilder:
         self,
         scope: Union[str, object],  # Accepts either a slug or model instance
     ):
-        from syncast import config # loads app_id from runtime settings
+        from syncast.core.config import config # loads app_id from runtime settings
         self.app_id: str = config.app_id or "default-app"  # fallback for dev
         self.scope = self._resolve_scope(scope)
         self._channel: Optional[str] = None
@@ -38,7 +38,7 @@ class SyncCastTopicBuilder:
         raise LookupError("No concrete model found inheriting from AbstractSyncCastScope.")
 
     def _resolve_scope(self, scope: Union[str, object]):
-        if hasattr(scope, "slug") and hasattr(scope, "channels"):
+        if hasattr(scope, "name") and hasattr(scope, "channels"):
             return scope
 
         if isinstance(scope, str):
