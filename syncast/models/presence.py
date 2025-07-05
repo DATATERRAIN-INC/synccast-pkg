@@ -5,6 +5,7 @@ from django.db import models
 from django.conf import settings
 from django.utils import timezone
 
+# SyncCast abstract model
 from syncast.models.base import AbstractSyncCastBaseModel
 class AbstractSyncCastUserPresence(AbstractSyncCastBaseModel):
     """Tracks real-time presence and activity status of users."""

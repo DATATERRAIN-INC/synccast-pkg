@@ -1,8 +1,10 @@
 # syncast/models/tracker.py
 
+# Djnago imports
 from django.db import models
 from django.conf import settings
 
+# SyncCast abstract model
 from syncast.models.base import AbstractSyncCastBaseModel
 from syncast.models.message import AbstractSyncCastMessage
 

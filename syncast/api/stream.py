@@ -1,20 +1,29 @@
+# Default package imports
 from typing import Optional, Dict, Any, Union
 
-from syncast.core.dispatcher import SyncCastDispatcher
-from syncast.core.topic import SyncCastTopicBuilder
-from syncast.core.payload import SyncCastPayloadBuilder
-from syncast.core.enums import SyncCastEventType
-from syncast.core.endpoints import PushEndpoints
+# SyncCast abstract model
 from syncast.models import AbstractSyncCastScope
 
-from syncast.exceptions.core import (
+# SyncCast builder
+from syncast.core.topic import SyncCastTopicBuilder
+from syncast.core.payload import SyncCastPayloadBuilder
+
+# SyncCast service dispatcher
+from syncast.core.dispatcher import SyncCastDispatcher
+ 
+# SyncCast enums
+from syncast.core.enums import SyncCastEventType
+
+# SyncCast service endpoints
+from syncast.core.endpoints import PushEndpoints
+ 
+# SyncCast custom exceptions
+from syncast.exceptions.types import (
     SyncCastTopicError,
     SyncCastPayloadError,
     SyncCastDispatchError,
     SyncCastAPIError
 )
-
-
 class StreamService:
     """
     Service for pushing UI update events (e.g., real-time data refreshes) via SyncCast.
@@ -40,10 +49,7 @@ class StreamService:
         device: Optional[str] = None,
         location: Optional[str] = None,
     ) -> dict:
-        """
-        Send a real-time UI data sync event.
-        """
-
+         
         try:
             # Build topic if not provided
             if not topic:

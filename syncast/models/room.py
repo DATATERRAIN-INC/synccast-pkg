@@ -1,8 +1,10 @@
 # syncast/models/room.py
 
+# Django imports
 from django.db import models
 from django.conf import settings
 
+# SyncCast abstract model
 from syncast.models.scope import AbstractSyncCastScope
 from syncast.models.base import AbstractSyncCastBaseModel
 

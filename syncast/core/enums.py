@@ -1,18 +1,16 @@
 # syncast/core/enums.py
 
+# Default package imports
 from enum import Enum, IntEnum
-
 class SyncCastEventType(str, Enum):
     """Types of real-time SyncCast notifications."""
-    SYSTEM_EVENT = "system"
-    PUSH_ALERT = "push"
-    USER_PRESENCE = "presence"
-    DATA_SYNC = "data"
-    CHAT_MESSAGE = "message"
-    USER_TYPING = "typing"
-    ROOM_UPDATE = "room"
-
-
+    SYSTEM_EVENT = "system"        # Internal system-level events (e.g. maintenance, config updates)
+    PUSH_ALERT = "push"            # Push notifications triggered by alerts or actions
+    USER_PRESENCE = "presence"     # Real-time presence updates (online/offline/away)
+    DATA_SYNC = "data"             # Data synchronization events (e.g. cache, model sync)
+    CHAT_MESSAGE = "message"       # New chat messages (1:1, group, or broadcast)
+    USER_TYPING = "typing"         # Typing indicators (user is typing in a chat/room)
+    ROOM_UPDATE = "room"           # Room-related events (e.g. name change, participant list update)
 class SyncCastPriorityLevel(str, Enum):
     """Defines importance level for notifications."""
     LOW = "low"            # Background or low-urgency

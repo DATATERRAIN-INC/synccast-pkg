@@ -1,5 +1,6 @@
 # syncast/models/base.py
 
+# Django imports
 from django.db import models
 from django.conf import settings
 

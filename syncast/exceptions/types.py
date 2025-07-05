@@ -1,5 +1,7 @@
+# Default package imports
 from typing import Optional, Dict
 
+# SyncCast custom exceptions error & errorcode
 from syncast.exceptions.base import SyncCastError
 from syncast.exceptions.codes import SyncCastErrorCode
 

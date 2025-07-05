@@ -1,6 +1,9 @@
 # syncast/models/scope.py
 
+# Django imports
 from django.db import models
+
+# SyncCast abstract model
 from syncast.models.base import AbstractSyncCastBaseModel
 
 class AbstractSyncCastScope(AbstractSyncCastBaseModel):

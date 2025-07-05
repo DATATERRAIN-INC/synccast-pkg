@@ -1,7 +1,10 @@
 # syncast/models/message.py
+
+# Django imports
 from django.db import models
 from django.conf import settings
 
+# SyncCast abstract model
 from syncast.models.base import AbstractSyncCastBaseModel
 from syncast.models.room import AbstractSyncCastRoom
 

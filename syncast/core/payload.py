@@ -1,12 +1,18 @@
 # Package imports
 from typing import Optional, Dict, Any, Union
-from copy import deepcopy
 
-# Module imports
+# SyncCast abstract model
 from syncast.models import AbstractSyncCastScope
-from syncast.core.enums import SyncCastEventType, SyncCastPriorityLevel, SyncCastQosLevel
-from syncast.exceptions.core import SyncCastPayloadError
 
+# SyncCast enums
+from syncast.core.enums import (
+    SyncCastEventType, 
+    SyncCastPriorityLevel, 
+    SyncCastQosLevel
+)
+
+# SyncCast custom exceptions
+from syncast.exceptions.types import SyncCastPayloadError
 class SyncCastPayloadBuilder:
     """
     Builds structured notification payloads for SyncCast events.

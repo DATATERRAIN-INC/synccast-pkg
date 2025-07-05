@@ -1,20 +1,29 @@
+# Default package imports
 from typing import Optional, Dict, Any, Union
 
-from syncast.core.dispatcher import SyncCastDispatcher
-from syncast.core.topic import SyncCastTopicBuilder
-from syncast.core.payload import SyncCastPayloadBuilder
-from syncast.core.enums import SyncCastEventType
-from syncast.core.endpoints import PushEndpoints
+# SyncCast abstract model
 from syncast.models import AbstractSyncCastScope
 
-from syncast.exceptions.core import (
+# SyncCast builder
+from syncast.core.topic import SyncCastTopicBuilder
+from syncast.core.payload import SyncCastPayloadBuilder
+
+# SyncCast service dispatcher
+from syncast.core.dispatcher import SyncCastDispatcher
+
+# SyncCast enums
+from syncast.core.enums import SyncCastEventType
+
+# SyncCast service endpoints
+from syncast.core.endpoints import PushEndpoints
+ 
+# SyncCast custom exceptions
+from syncast.exceptions.types import (
     SyncCastTopicError,
     SyncCastPayloadError,
     SyncCastDispatchError,
     SyncCastAPIError,
 )
-
-
 class NotificationService:
     """
     Service for dispatching system notifications over SyncCast.
@@ -39,17 +48,20 @@ class NotificationService:
         device: Optional[str] = None,
         location: Optional[str] = None,
     ) -> dict:
-        """
-        Send a system-level notification to the SyncCast system.
-        """
-
+         
         try:
             if not topic:
                 builder = SyncCastTopicBuilder(app_id=self.app_id, scope=scope).channel(channel)
-                if room_id:
-                    builder.extra(room_id)
-                if user_id:
-                    builder.for_user(user_id)
+
+                steps = [
+                    (room_id, builder.extra),
+                    (user_id, builder.for_user),
+                ]
+
+                for value, method in steps:
+                    if value:
+                        builder = method(value)
+
                 topic = builder.build()
 
             payload_builder = (

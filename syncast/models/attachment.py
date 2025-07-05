@@ -1,9 +1,11 @@
 # syncast/models/attachment.py
+
+# Django imports
 from django.db import models
 
+# SyncCast abstract model
 from syncast.models.base import AbstractSyncCastBaseModel
 from syncast.models.message import AbstractSyncCastMessage
- 
 class AbstractSyncCastAttachment(AbstractSyncCastBaseModel):
     """
     Represents an attachment to a message, e.g., images, files.

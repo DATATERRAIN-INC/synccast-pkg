@@ -1,14 +1,21 @@
+# Default package imports
 import requests
 import logging
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 from typing import Optional, Dict, Any, Union
 
-from syncast.core.config import SyncCastRequestConfig
-from syncast.exceptions.core import SyncCastDispatchError, SyncCastAPIError
+# syncCast sdk singelton instance
+from syncast import syncast
 
+# SyncCast custom exceptions
+from syncast.exceptions.types import (
+    SyncCastDispatchError, 
+    SyncCastAPIError
+)
+
+# logger instance
 logger = logging.getLogger(__name__)
-
 
 class SyncCastDispatcher:
     """
@@ -25,9 +32,8 @@ class SyncCastDispatcher:
         backoff_factor: float = 0.3,
         logger_instance: Optional[logging.Logger] = None
     ):
-        config = SyncCastRequestConfig()
 
-        self.base_url = (base_url or config.base_url).rstrip("/")
+        self.base_url = (base_url or syncast._api_base).rstrip("/")
         self.headers = headers or {}
         self.timeout = timeout
         self.logger = logger_instance or logger
@@ -43,10 +49,6 @@ class SyncCastDispatcher:
         adapter = HTTPAdapter(max_retries=retry_strategy)
         self.session.mount("http://", adapter)
         self.session.mount("https://", adapter)
-
-        # Inject credentials from config
-        if config.app_id and config.app_secret:
-            self.with_secret(config.app_id, config.app_secret)
 
     def with_base_url(self, url: str) -> 'SyncCastDispatcher':
         self.base_url = url.rstrip("/")

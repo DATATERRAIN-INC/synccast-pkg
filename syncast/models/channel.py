@@ -1,10 +1,11 @@
-# # syncast/models/channel.py
+# syncast/models/channel.py
 
+# Django imports
 from django.db import models
 
+# SyncCast abstract model
 from syncast.models.scope import AbstractSyncCastScope
 from syncast.models.base import AbstractSyncCastBaseModel
-
 class AbstractSyncCastChannel(AbstractSyncCastBaseModel):
     """
     Represents an event stream within a scope, e.g., 'message', 'typing', 'presence'.

@@ -1,20 +1,29 @@
+# Default package imports
 from typing import Optional, Dict, Any, Union
 
-from syncast.core.dispatcher import SyncCastDispatcher
-from syncast.core.topic import SyncCastTopicBuilder
-from syncast.core.payload import SyncCastPayloadBuilder
-from syncast.core.enums import SyncCastEventType
-from syncast.core.endpoints import PushEndpoints
+# SyncCast abstract model
 from syncast.models import AbstractSyncCastScope
 
-from syncast.exceptions.core import (
+# SyncCast builder
+from syncast.core.topic import SyncCastTopicBuilder
+from syncast.core.payload import SyncCastPayloadBuilder
+
+# SyncCast service dispatcher
+from syncast.core.dispatcher import SyncCastDispatcher
+
+# SyncCast enums
+from syncast.core.enums import SyncCastEventType
+
+# SyncCast service endpoints
+from syncast.core.endpoints import PushEndpoints
+
+# SyncCast custom exceptions
+from syncast.exceptions.types import (
     SyncCastTopicError,
     SyncCastPayloadError,
     SyncCastDispatchError,
     SyncCastAPIError,
 )
-
-
 class MessageService:
     """
     Service for dispatching chat messages over SyncCast.
@@ -22,7 +31,7 @@ class MessageService:
 
     def __init__(self, dispatcher: SyncCastDispatcher, app_id: str):
         self.dispatcher = dispatcher
-        self.app_id = app_id  # used for topic generation
+        self.app_id = app_id
 
     def send_message(
         self,
@@ -39,10 +48,7 @@ class MessageService:
         device: Optional[str] = None,
         location: Optional[str] = None,
     ) -> dict:
-        """
-        Send a chat message via MQTT through SyncCast.
-        """
-
+        
         try:
             if not topic:
                 builder = SyncCastTopicBuilder(app_id=self.app_id, scope=scope).channel(channel)

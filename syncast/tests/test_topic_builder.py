@@ -31,6 +31,5 @@ def test_topic_builder_with_dynamic_models():
         .extra("room", 5)
         .build()
     )
-    print(type(topic), topic)
-
+    
     assert topic == f"default-app/Chat/message/room/5/user/42"

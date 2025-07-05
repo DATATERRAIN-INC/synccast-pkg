@@ -1,12 +1,14 @@
+# Default package imports
 from typing import Optional, Dict, Any, Union
 from copy import deepcopy
+
+# Django imports
 from django.apps import apps
 
-from syncast.exceptions.core import SyncCastTopicError
-    
-
-
+# SyncCast custom exceptions
+from syncast.exceptions.types import SyncCastTopicError
 class SyncCastTopicBuilder:
+
     """
     Builds MQTT topic strings dynamically based on app_id, scope (instance or slug), 
     channel, and optional user or extra parts. Supports wildcards for subscription.
@@ -14,10 +16,10 @@ class SyncCastTopicBuilder:
 
     def __init__(
         self,
+        app_id: str,
         scope: Union[str, object],  # Accepts either a slug or model instance
     ):
-        from syncast.core.config import config # loads app_id from runtime settings
-        self.app_id: str = config.app_id or "default-app"  # fallback for dev
+        self.app_id = app_id or "default-app"  # fallback for dev
         self.scope = self._resolve_scope(scope)
         self._channel: Optional[str] = None
         self._extra_parts: list[str] = []
