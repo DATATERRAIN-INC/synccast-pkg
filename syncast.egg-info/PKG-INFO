@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: syncast
-Version: 0.1.0
+Version: 0.2.0
 Summary: Real-time communication and UI sync framework for Django using MQTT
 Home-page: https://github.com/smarakaranjan/synccast
 Author: Smaraka Ranjan Parida B
@@ -58,3 +58,5 @@ Install directly from GitHub:
 
 ```bash
 pip install git+https://github.com/smarakaranjan/syncast.git
+
+pip install git+https://github.com/smarakaranjan/syncast.git@v0.1.0

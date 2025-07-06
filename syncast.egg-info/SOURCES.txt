@@ -35,6 +35,7 @@ synccast/models/attachment.py
 synccast/models/base.py
 synccast/models/channel.py
 synccast/models/message.py
+synccast/models/mixins.py
 synccast/models/presence.py
 synccast/models/reaction.py
 synccast/models/room.py
