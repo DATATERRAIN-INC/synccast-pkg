@@ -29,3 +29,5 @@ Install directly from GitHub:
 
 ```bash
 pip install git+https://github.com/smarakaranjan/syncast.git
+
+pip install git+https://github.com/smarakaranjan/syncast.git@v0.1.0
