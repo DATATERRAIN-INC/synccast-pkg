@@ -1,0 +1,60 @@
+Metadata-Version: 2.4
+Name: syncast
+Version: 0.1.0
+Summary: Real-time communication and UI sync framework for Django using MQTT
+Home-page: https://github.com/smarakaranjan/synccast
+Author: Smaraka Ranjan Parida B
+Author-email: smarka@dataterrain.com
+Classifier: Programming Language :: Python :: 3
+Classifier: Framework :: Django
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: Django>=3.2
+Requires-Dist: requests
+Requires-Dist: pytest
+Requires-Dist: pytest-django
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# synccast
+
+**Real-time UI sync and messaging framework for Django — powered by MQTT.**
+
+SyncCast enables your Django backend to publish scoped, channel-based real-time events over MQTT, supporting use cases like:
+
+- 🗨️ Live chat
+- 👤 Presence and typing indicators
+- 🛎️ UI notifications
+- 📊 Live dashboards
+
+It is frontend-agnostic — your frontend simply subscribes to MQTT topics and reacts accordingly.
+
+---
+
+## Features
+
+- 📡 Real-time event broadcasting over MQTT
+- 🔐 Secure SDK interface with app credentials
+- 🧱 Modular architecture (`core`, `api`, `exceptions`)
+- 🎯 Compatible with any frontend
+- 📦 Installable directly from GitHub
+
+---
+
+## Installation
+
+Install directly from GitHub:
+
+```bash
+pip install git+https://github.com/smarakaranjan/syncast.git
