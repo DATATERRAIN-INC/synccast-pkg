@@ -54,8 +54,8 @@ class SyncCastSDK:
         """
         from synccast.core.dispatcher import SyncCastDispatcher
         dispatcher = SyncCastDispatcher().with_base_url(self._api_base)
-        if self._app_id and self._app_secret:
-            dispatcher.with_secret(self._app_id, self._app_secret)
+        if config._app_id and config._app_secret:
+            dispatcher.with_secret(config._app_id, config._app_secret)
         return dispatcher
 
     @cached_property
@@ -64,7 +64,7 @@ class SyncCastSDK:
         Access the StreamService for broadcasting UI sync events.
         """
         from synccast.api.stream import StreamService
-        return StreamService(dispatcher=self.dispatcher, app_id=self._app_id)
+        return StreamService(dispatcher=self.dispatcher, app_id=config._app_id)
 
     @cached_property
     def presence(self):
@@ -72,7 +72,7 @@ class SyncCastSDK:
         Access the PresenceService for sending real-time presence updates.
         """
         from synccast.api.presence import PresenceService
-        return PresenceService(dispatcher=self.dispatcher, app_id=self._app_id)
+        return PresenceService(dispatcher=self.dispatcher, app_id=config._app_id)
 
     @cached_property
     def chat(self):
@@ -80,7 +80,7 @@ class SyncCastSDK:
         Access the MessageService for real-time chat messaging.
         """
         from synccast.api.message import MessageService
-        return MessageService(dispatcher=self.dispatcher, app_id=self._app_id)
+        return MessageService(dispatcher=self.dispatcher, app_id=config._app_id)
 
     @cached_property
     def notify(self):
@@ -88,7 +88,7 @@ class SyncCastSDK:
         Access the NotificationService for dispatching in-app notifications.
         """
         from synccast.api.notification import NotificationService
-        return NotificationService(dispatcher=self.dispatcher, app_id=self._app_id)
+        return NotificationService(dispatcher=self.dispatcher, app_id=config._app_id)
 
     @cached_property
     def topic_builder(self):
