@@ -38,15 +38,37 @@ class SyncCastTopicBuilder:
                 return model
 
         raise LookupError("No concrete model found inheriting from AbstractSyncCastScope.")
+    
+    
+    @staticmethod
+    def get_channel_related_manager(scope_instance):
+        from synccast.models.channel import AbstractSyncCastChannel
+        for rel in scope_instance._meta.related_objects:
+            if issubclass(rel.related_model, AbstractSyncCastChannel):
+                return getattr(scope_instance, rel.get_accessor_name())  # i.e., scope.channels
+        raise LookupError("No SyncCastChannel relation found.")
 
     def _resolve_scope(self, scope: Union[str, object]):
-        if hasattr(scope, "name") and hasattr(scope, "channels"):
-            return scope
+        from synccast.models.scope import AbstractSyncCastScope
+
+        if isinstance(scope, AbstractSyncCastScope):  # safest check
+            try:
+                self.get_channel_related_manager(scope)
+                return scope
+            except LookupError:
+                pass
 
         if isinstance(scope, str):
             try:
                 ScopeModel = self._get_concrete_scope_model()
-                return ScopeModel.objects.prefetch_related("channels").get(slug=scope)
+
+                # Fetch one object (no prefetch here — since related name is dynamic)
+                instance = ScopeModel.objects.get(name=scope)
+
+                # Trigger channel manager to cache related objects if needed (lazy eval is fine)
+                self.get_channel_related_manager(instance)
+
+                return instance
             except Exception as e:
                 raise SyncCastTopicError(
                     message=f"Scope with slug '{scope}' not found or failed to load.",
@@ -59,12 +81,21 @@ class SyncCastTopicBuilder:
         )
 
     def channel(self, channel_name: str) -> 'SyncCastTopicBuilder':
-        if not any(c.name == channel_name for c in self.scope.channels.all()):
-            valid_channels = [c.name for c in self.scope.channels.all()]
+        try:
+            channel_manager = self.get_channel_related_manager(self.scope)
+        except Exception as e:
+            raise SyncCastTopicError(
+                message=f"Scope object does not have a valid channel relation.",
+                extra={"scope": str(self.scope), "error": str(e)}
+            ) from e
+
+        if not any(c.name == channel_name for c in channel_manager.all()):
+            valid_channels = [c.name for c in channel_manager.all()]
             raise SyncCastTopicError(
                 message=f"Channel '{channel_name}' not defined for scope '{self.scope.name}'.",
                 extra={"channel": channel_name, "valid_channels": valid_channels}
             )
+
         self._channel = channel_name
         return self
 

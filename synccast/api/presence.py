@@ -41,8 +41,6 @@ class PresenceService:
         user_id: str,
         data: Dict[str, Any],
         scope: Union[str, AbstractSyncCastScope] = "chat",
-        channel: str = "presence",
-        room_id: Optional[str] = None,
         topic: Optional[str] = None,
         sender_name: Optional[str] = None,
         sender_role: Optional[str] = None,
@@ -52,16 +50,6 @@ class PresenceService:
     ) -> dict:
          
         try:
-            # Generate topic
-            if not topic:
-                builder = SyncCastTopicBuilder(app_id=self.app_id, scope=scope).channel(channel)
-                for value, method in [
-                    (room_id, builder.extra),
-                    (user_id, builder.for_user),
-                ]:
-                    if value:
-                        builder = method(value)
-                topic = builder.build()
 
             # Build payload
             payload_builder = (
@@ -83,12 +71,6 @@ class PresenceService:
 
             # Dispatch to broker
             return self.dispatcher.post(PushEndpoints.PRESENCE, json=payload)
-
-        except (ValueError, SyncCastTopicError) as e:
-            raise SyncCastTopicError(
-                message="Failed to build presence topic",
-                extra={"scope": str(scope), "channel": channel, "room_id": room_id}
-            ) from e
 
         except SyncCastPayloadError as e:
             raise SyncCastPayloadError(

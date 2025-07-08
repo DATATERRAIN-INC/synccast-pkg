@@ -39,9 +39,7 @@ class NotificationService:
         user_id: Optional[str],
         data: Dict[str, Any],
         scope: Union[str, AbstractSyncCastScope] = "system",
-        channel: str = "notification",
         topic: Optional[str] = None,
-        room_id: Optional[str] = None,
         sender_name: Optional[str] = None,
         sender_role: Optional[str] = None,
         platform: Optional[str] = None,
@@ -50,19 +48,6 @@ class NotificationService:
     ) -> dict:
          
         try:
-            if not topic:
-                builder = SyncCastTopicBuilder(app_id=self.app_id, scope=scope).channel(channel)
-
-                steps = [
-                    (room_id, builder.extra),
-                    (user_id, builder.for_user),
-                ]
-
-                for value, method in steps:
-                    if value:
-                        builder = method(value)
-
-                topic = builder.build()
 
             payload_builder = (
                 SyncCastPayloadBuilder(user=user_id, type=SyncCastEventType.SYSTEM_EVENT)
@@ -84,13 +69,7 @@ class NotificationService:
             payload = payload_builder.build()
 
             return self.dispatcher.post(PushEndpoints.SYSTEM, json=payload)
-
-        except (ValueError, SyncCastTopicError) as e:
-            raise SyncCastTopicError(
-                message="Invalid topic for system notification",
-                extra={"scope": str(scope), "channel": channel, "room_id": room_id}
-            ) from e
-
+        
         except SyncCastPayloadError as e:
             raise SyncCastPayloadError(
                 message="Invalid system notification payload",

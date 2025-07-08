@@ -38,11 +38,8 @@ class StreamService:
         *,
         user_id: str,
         data: Dict[str, Any],
-        event_type: SyncCastEventType = SyncCastEventType.DATA_SYNC,
         scope: Union[str, AbstractSyncCastScope] = "ui",
-        channel: str = "sync",
         topic: Optional[str] = None,
-        target_id: Optional[str] = None,
         sender_name: Optional[str] = None,
         sender_role: Optional[str] = None,
         platform: Optional[str] = None,
@@ -51,16 +48,10 @@ class StreamService:
     ) -> dict:
          
         try:
-            # Build topic if not provided
-            if not topic:
-                builder = SyncCastTopicBuilder(app_id=self.app_id, scope=scope).channel(channel)
-                if target_id:
-                    builder.extra(target_id)
-                topic = builder.for_user(user_id).build()
 
             # Build payload
             payload_builder = (
-                SyncCastPayloadBuilder(user=user_id, type=event_type)
+                SyncCastPayloadBuilder(user=user_id, type=SyncCastEventType.USER_PRESENCE)
                 .set_scope(scope)
                 .set_topic(topic)
                 .set_data(data)
@@ -78,12 +69,6 @@ class StreamService:
 
             # Send to SyncCast
             return self.dispatcher.post(PushEndpoints.SYNC, json=payload)
-
-        except (ValueError, SyncCastTopicError) as e:
-            raise SyncCastTopicError(
-                message="Invalid topic during UI sync",
-                extra={"scope": str(scope), "channel": channel, "target_id": target_id}
-            ) from e
 
         except SyncCastPayloadError as e:
             raise SyncCastPayloadError(

@@ -39,9 +39,7 @@ class TypingService:
         user_id: str,
         data: Dict[str, Any],
         scope: Union[str, AbstractSyncCastScope] = "chat",
-        channel: str = "typing",
         topic: Optional[str] = None,
-        room_id: Optional[str] = None,
         sender_name: Optional[str] = None,
         sender_role: Optional[str] = None,
         platform: Optional[str] = None,
@@ -50,22 +48,7 @@ class TypingService:
     ) -> dict:
          
         try:
-            # Topic generation
-            if not topic:
-                builder = SyncCastTopicBuilder(app_id=self.app_id, scope=scope).channel(channel)
-
-                # List of (value, builder method)
-                steps = [
-                    (room_id, builder.extra),
-                    (user_id, builder.for_user),
-                ]
-
-                for value, method in steps:
-                    if value is not None:
-                        builder = method(value)
-
-                topic = builder.build()
-
+            
             # Payload creation
             payload_builder = (
                 SyncCastPayloadBuilder(user=user_id, type=SyncCastEventType.USER_TYPING)

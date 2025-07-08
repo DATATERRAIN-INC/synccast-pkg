@@ -39,9 +39,7 @@ class MessageService:
         user_id: str,
         data: Dict[str, Any],
         scope: Union[str, AbstractSyncCastScope] = "chat",
-        channel: str = "message",
         topic: Optional[str] = None,
-        room_id: Optional[str] = None,
         sender_name: Optional[str] = None,
         sender_role: Optional[str] = None,
         platform: Optional[str] = None,
@@ -50,12 +48,6 @@ class MessageService:
     ) -> dict:
         
         try:
-            if not topic:
-                builder = SyncCastTopicBuilder(app_id=self.app_id, scope=scope).channel(channel)
-                if room_id:
-                    builder.extra(room_id)
-                topic = builder.for_user(user_id).build()
-
             payload_builder = (
                 SyncCastPayloadBuilder(user=user_id, type=SyncCastEventType.CHAT_MESSAGE)
                 .set_scope(scope)
@@ -76,13 +68,7 @@ class MessageService:
             payload = payload_builder.build()
 
             return self.dispatcher.post(PushEndpoints.MESSAGE, json=payload)
-
-        except (ValueError, SyncCastTopicError) as e:
-            raise SyncCastTopicError(
-                message="Failed to build chat message topic",
-                extra={"scope": str(scope), "channel": channel, "room_id": room_id}
-            ) from e
-
+        
         except SyncCastPayloadError as e:
             raise SyncCastPayloadError(
                 message="Invalid chat message payload",
