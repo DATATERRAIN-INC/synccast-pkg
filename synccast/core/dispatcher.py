@@ -81,7 +81,8 @@ class SyncCastDispatcher:
 
     def _safe_request(self, method: str, *args, **kwargs) -> requests.Response:
         try:
-            return getattr(self.session, method)(*args, timeout=self.timeout, **kwargs)
+            headers_to_use = kwargs.get('headers', self.headers)
+            return getattr(self.session, method)(*args, timeout=self.timeout, headers=headers_to_use, **kwargs)
         except requests.exceptions.RequestException as e:
             self.logger.exception(f"[SyncCastDispatcher] {method.upper()} request failed")
             raise SyncCastDispatchError(
