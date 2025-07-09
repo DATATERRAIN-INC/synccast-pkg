@@ -43,15 +43,23 @@ class SyncCastTopicBuilder:
     @staticmethod
     def get_channel_related_manager(scope_instance):
         from synccast.models.channel import AbstractSyncCastChannel
-        for rel in scope_instance._meta.related_objects:
-            if issubclass(rel.related_model, AbstractSyncCastChannel):
-                return getattr(scope_instance, rel.get_accessor_name())  # i.e., scope.channels
-        raise LookupError("No SyncCastChannel relation found.")
+        for field in scope_instance._meta.get_fields():
+            if (
+                field.is_relation
+                and field.auto_created
+                and not field.concrete
+                and hasattr(field, "related_model")
+                and issubclass(field.related_model, AbstractSyncCastChannel)
+            ):
+                return getattr(scope_instance, field.get_accessor_name())
+
+        raise LookupError("No SyncCastChannel reverse relation found on scope model.")
 
     def _resolve_scope(self, scope: Union[str, object]):
         from synccast.models.scope import AbstractSyncCastScope
 
-        if isinstance(scope, AbstractSyncCastScope):  # safest check
+        # Check class inheritance directly
+        if issubclass(type(scope), AbstractSyncCastScope) and not scope._meta.abstract:
             try:
                 self.get_channel_related_manager(scope)
                 return scope

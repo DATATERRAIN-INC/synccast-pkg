@@ -41,8 +41,3 @@ synccast/models/reaction.py
 synccast/models/room.py
 synccast/models/scope.py
 synccast/models/tracker.py
-synccast/tests/__init__.py
-synccast/tests/settings.py
-synccast/tests/test_payload_builder.py
-synccast/tests/test_topic_builder.py
-synccast/tests/utils/dynamic_models.py

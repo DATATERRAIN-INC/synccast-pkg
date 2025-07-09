@@ -71,7 +71,7 @@ class TypingService:
             return self.dispatcher.post(PushEndpoints.TYPING, json=payload)
 
         except (ValueError, SyncCastTopicError) as e:
-            raise SyncCastTopicError("Failed to generate topic", extra={"scope": str(scope), "room_id": room_id}) from e
+            raise SyncCastTopicError("Failed to generate topic", extra={"scope": str(scope)}) from e
 
         except SyncCastPayloadError as e:
             raise SyncCastPayloadError("Invalid typing payload", extra={"user_id": user_id, "topic": topic}) from e
