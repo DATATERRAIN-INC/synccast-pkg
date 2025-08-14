@@ -27,6 +27,15 @@ class AbstractSyncCastMessage(EnforcedFKTargetsMixin, AbstractSyncCastBaseModel)
         help_text="The user who sent the message."
     )
 
+    parent_message = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="replies",
+        help_text="Reference to the parent message (for replies/threads)."
+    )
+    
     content = models.TextField(
         blank=True,
         null=True,
