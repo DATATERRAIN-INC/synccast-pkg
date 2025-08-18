@@ -125,12 +125,6 @@ class SyncCastTopicBuilder:
                 extra={"scope": getattr(self.scope, 'name', '<unknown>'), "app_id": self.app_id}
             )
 
-        if self._user_id is None and not self._wildcard:
-            raise SyncCastTopicError(
-                message="User ID must be specified using .for_user(...) or wildcard() before building topic.",
-                extra={"scope": getattr(self.scope, 'name', '<unknown>'), "channel": self._channel}
-            )
-
         parts = [self.app_id, self.scope.name]
         parts.extend(self._extra_parts)
         parts.extend(["user", "+" if self._wildcard else self._user_id])
